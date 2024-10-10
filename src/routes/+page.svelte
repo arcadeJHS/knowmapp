@@ -9,6 +9,7 @@
     let capabilities: AISummarizerCapabilities | undefined;
     let summarizerSession: AISummarizerSession | undefined;
 
+    // Questa funzione deve diventare ricorsiva: se la somma dei sommari intermedi supera i caratteri consentiti, occorre "sommarizzare anche i sommari"
     const summarize = async (event: CustomEvent) => {
         const url: string = event.detail.url;
         doc = await getHtmlContent(url);
