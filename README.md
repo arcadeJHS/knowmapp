@@ -141,3 +141,7 @@ export default {
   }
 };
 ```
+
+### Useful Cloudflare docs
+
+https://developers.cloudflare.com/workers/examples/cors-header-proxy/
