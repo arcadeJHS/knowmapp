@@ -9,28 +9,41 @@
     let capabilities: AISummarizerCapabilities | undefined;
     let summarizerSession: AISummarizerSession | undefined;
 
-    // Questa funzione deve diventare ricorsiva: se la somma dei sommari intermedi supera i caratteri consentiti, occorre "sommarizzare anche i sommari"
-    const summarize = async (event: CustomEvent) => {
-        const url: string = event.detail.url;
-        doc = await getHtmlContent(url);
-
-        if (!doc) {
-            return;
-        }
-
+    async function summarizeText(text: string): Promise<string> {
         // The context window is currently limited to 1024 tokens.
         // You can estimate the number of tokens in English content by assuming that 1 token is roughly equal to 4 characters.
         // https://docs.google.com/document/d/1Bvd6cU9VIEb7kHTAOCtmmHNAYlIZdeNmV7Oy-2CtimA/edit?pli=1#heading=h.wotps13gj8r
         const maxChars = 1000;
-        for (let i = 0; i < doc.length; i += maxChars) {
-            const slice = doc.slice(i, i + maxChars);
+
+        // Split the text into slices of max 1000 characters
+        for (let i = 0; i < text.length; i += maxChars) {
+            const slice = text.slice(i, i + maxChars);
             const sliceSummary = await summarizerSession?.summarize(slice);
             if (sliceSummary) {
                 summaries = [...summaries, sliceSummary];
             }
         }
 
-        summary = await summarizerSession?.summarize(summaries?.join(' '));
+        let combinedSummary = summaries.join(' ');
+
+        // If the combined summary is greater than 1000 characters, summarize it again
+        if (combinedSummary.length > maxChars) {
+            combinedSummary = await summarizeText(combinedSummary);
+        }
+
+        return combinedSummary;
+    }
+
+    const summarize = async (event: CustomEvent) => {
+        const url: string = event.detail.url;
+
+        if (!url) { return; }
+
+        doc = await getHtmlContent(url);
+
+        if (!doc) { return; }
+
+        summary = await summarizeText(doc);
     };
 
     onMount(async () => {
